@@ -14,7 +14,7 @@ const {identification, touchAccount} = require("./mongooseHelpers/controllers/au
 const {AuthService} = require('./service/auth.service')
 
 const app = express()
-app.use(bodyParser.json())    //(!) Обязателен для всех запросов, которые имеют pl(для POST-запросов).
+app.use(bodyParser.json())    //(!)-Обязателен для всех запросов, которые имеют pl(для POST-запросов).
 app.use(cookieParser('demoProject'))
 
 
@@ -35,9 +35,6 @@ app.use(session({
   saveUninitialized: false,
   store: new MongoSessionStore({mongooseConnection: sessionConnection, ttl: 14 * 24 * 60 * 60})
 }))
-
-
-
 
 
 //проверка accessToken'a
@@ -67,11 +64,8 @@ app.use(async (req, res, next) => {
         })
     }
     else {
-    //2с. Если accessToken - деформированный.
-      //<<<<<<<<<<<<<< СОВЕРШАЕМ LOGOUT(!) - ДОПИСАТЬ надо.
-      console.log('==здесь дб команда на логаут <<<<<<<<<<<<<<<<<<<')
-      // res.redirect('/a11n')
-      return
+    //2с. Если accessToken - деформированный, СОВЕРШАЕМ LOGOUT
+      return res.status(403).send({message: 'you need to get authorisation again'})
     }
     
     //2. ДЕЙСТВИЯ на основании проверок:
@@ -88,20 +82,13 @@ app.use(async (req, res, next) => {
     //далее axios-интерсептор клиента получает ошибку и посылает запрос на восстановление accessToken'а (pl запроса будет - {login: '', password: ''}),
     //Как только клиент получит восстановленный accessToken, то axios-интерсептор повторяет неудавшийся запрос.
     if (isAccessTokenMatched && !isAccessTokenAlive && !req.url.includes('authentication')) {
-      console.log('app.use(), возвращаем ОШИБКУ 401 ==========')
       res.status(401)
       return
     }
   }
 
-
-  console.log('req.url <<<<<<<<<', req.url)
-  console.log('req.headers.referer<<<<<<<<<', req.headers.referer)
-
   //в состоянии login + находимся в '/basket' (refreshToken - есть) и перезагружаем сайт (т.е. url запроса будет '/basket', но accessToken слетает) - перебрасываемся на '/a11n'.
   if(!accessToken && req.headers.referer.includes('/basket') && refreshToken) {
-    console.log('accessToken <<<<<<<<<', accessToken)
-    console.log('req.url.includes(\'/basket\') <<<<<<<<<', req.url.includes('/basket'))
     return res.status(403).send({message: 'you need to get authorisation again'})
   }
 
@@ -115,16 +102,9 @@ app.use(async (req, res, next) => {
     req.authorizedLogin = accessTokenBody.login
   else
     req.authorizedLogin = ''
-  
-  console.log('req.authorizedLogin  ==============', req.authorizedLogin )
+
   next()
 })
-
-
-
-
-
-
 
 
 //basket
