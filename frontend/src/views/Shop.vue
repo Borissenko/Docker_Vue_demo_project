@@ -91,7 +91,7 @@ export default Vue.extend({
       transition-delay: ($base-delay + $i * $base-delay);
     }
   }
-  
+
   .cart:nth-child(n+9) {
     @include tr-reset();
     transition: trns($appear, opacity, transform);

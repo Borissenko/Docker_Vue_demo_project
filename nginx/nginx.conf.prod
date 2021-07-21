@@ -1,5 +1,6 @@
 server {
   listen 80;
+  # фронт-проект будем открывать в броузере по адресу localhost:80, или просто localhost (!).
 
   server_name localhost;
 

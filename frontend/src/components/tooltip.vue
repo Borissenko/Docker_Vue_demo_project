@@ -2,10 +2,8 @@
   <div class="tooltip"
        @mouseenter="makeAlive(true)"
        @mouseleave="makeAlive(false)"
+       v-html="tooltip"
   >
-    <h1>
-      {{ tooltip }}
-    </h1>
   </div>
 </template>
 
@@ -42,7 +40,7 @@ export default {
   mounted() {
     this.timeOut = setTimeout(() => {        //самоустранение tooltip
       this.SET_CLARIFICATION('')
-    }, 3000)
+    }, 2700)
   }
 }
 </script>
@@ -54,17 +52,22 @@ export default {
   top: 10%;
   
   width: 50%;
-  max-width: 250px;
-  height: 30%;
-  max-height: 100px;
-  
-  padding: 8%;
+  max-width: rem(600);
+  min-height: rem(400);
+  height: fit-content;
+
+  box-sizing: border-box;
+  padding: rem(30);
   background-color: $white-opasity;
   border: $grey-opasity 1px solid;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   color: $valid;
+  cursor: pointer;
   text-align: center;
   transition: all 1s ease;
-  cursor: pointer;
 }
 </style>

@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import VueRouter, {RouteConfig} from 'vue-router'
+import store from '../store'
 import authStore from '../store/auth'
 import Basket from '../views/Basket.vue'
 import A11n from '../views/A11n.vue'
@@ -27,16 +28,21 @@ const routes: Array<RouteConfig> = [
     name: 'Person',
     component: Person,
     beforeEnter(to, from, next) {
-      if(authStore.state.isAuthorization)
+      if (authStore.state.isAuthorization) {
         next()
-      else
-        next('/a11n')
+      } else {
+        let clarification = `Access was denied <br>because of <br> you need authorisation`
+        store.dispatch('SHOW_CLARIFICATION', clarification)
+          .then(() => {
+            next('/a11n')
+          })
+      }
     }
   },
   {
     path: '/:shelf',
     name: 'Shop',
-    component:  () => import('../views/Shop.vue')
+    component: () => import('../views/Shop.vue')
   },
   {
     path: '/:shelf/:productId',

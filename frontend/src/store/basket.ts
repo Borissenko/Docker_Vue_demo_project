@@ -15,7 +15,7 @@ const state = () => ({
 const getters = {
   GET_BASKET_POINTS: ({clientBasket}): ProductPoint[] => clientBasket,
   GET_BASKET_PRODUCTS: (state: UserState, getters): Product[] => {
-    if (getters.GET_BASKET_POINTS.lengthb === 0)
+    if (getters.GET_BASKET_POINTS.length === 0)
       return []
     
     //устраняем в корзине повторы заказанных продуктов
@@ -23,7 +23,6 @@ const getters = {
     
     let basketProducts = [] as Product[]
     for (let productPoint of noRedundantBasketProductPoints) {
-      // let product = state[productPoint.shelf].find(item => item._id === productPoint._id)
       let product = getters.GET_PRODUCTS(productPoint.shelf).find((item: Product) => item._id === productPoint._id)
       basketProducts.push(product)
     }
@@ -38,17 +37,7 @@ const getters = {
         count += 1
     }
     return count
-  },
-  // GET_AXIOS_CONFIG: (state: UserState, getters): AxiosConfig => {
-  //   return {
-  //     headers: {
-  //       accesstoken: getters.GET_ACCESS_TOKEN        //accessToken мы получаем на сервере как req.header('accesstoken'). Ключи у хедера надо писать МАЛЕНЬКИМИ буквами.
-  //     },
-  //     params: {
-  //       _id: ''         //_id мы получаем на сервере как req.query._id
-  //     }
-  //   }
-  // }
+  }
 } as GetterTree<UserState, RootState>
 
 const mutations = {
@@ -66,22 +55,18 @@ const mutations = {
 const actions = {
   async FETCH_BASKET_POINTS({commit}): Promise<void> {     //грузим при загрузе App
     await axios.get(`/auth/basket`)
-      .then(recoveryBasket => {
-        if (recoveryBasket.data.basketPoints.length > 0)
-          commit('SET_BASKET', recoveryBasket.data.basketPoints)
+      .then(({data}) => {
+        if (data.length > 0)
+          commit('SET_BASKET', data)
         commit('SET_IS_BASKET_POINTS', true)
       })
   },
-  async FETCH_BASKET_PRODUCTS({state, getters, commit, dispatch}): Promise<void> {    //грузим при ПЕРВОМ посещении корзины. Восполняем товар, отсутствующий во Vuex.
-    if (!state.isBasketPointsInTheStore)  //для состояния, когда, находясь на странице Корзина, мы перезагружаем броузер. Здесь требуется ждать обновления BasketPointsInTheStore.
-      await dispatch('FETCH_BASKET_POINTS')
-    
+  async FETCH_BASKET_PRODUCTS({state, getters, commit}): Promise<void> {    //грузим при ПЕРВОМ посещении корзины. Восполняем товар, отсутствующий во Vuex.
     if (state.clientBasket.length > 0) {
       //отбираем тот товар, который обозначен в корзине, но отсутствует во Vuex, (после перезагрузки сайта),
       //одновременно сортируя его по принадлежности к полкам и устраняя повторы.
       let unredundantedBasket = getters.GET_BASKET_POINTS.filter((item: ProductPoint, ind: number, arr: ProductPoint[]) => ind == arr.findIndex(i => i._id === item._id))
-      let upsetProducts = {} as any
-      
+      let upsetProducts = {} as any      //{'shelf': [productPoint, ...], }
       for (let productPoint of unredundantedBasket) {
         let isThere = getters.GET_PRODUCTS(productPoint.shelf).some((i: Product) => i._id === productPoint._id)  //присутствует ли корзиночный товар в shop'e.
         
@@ -92,14 +77,14 @@ const actions = {
         }
       }
       
-      //дозагружаем недостающий товар
-      for (let shelf of Object.keys(upsetProducts)) {
-        let shelfResponses = upsetProducts[shelf].map((productPoint: ProductPoint) =>
-          axios.get(`/api/shop/${productPoint.shelf}/${productPoint._id}`)
+      //дозагружаем недостающий товар по каждой полке
+      for await (let shelf of Object.keys(upsetProducts)) {
+        let shelfResponses = upsetProducts[shelf].map(async (productPoint: ProductPoint) =>
+          await axios.get(`/api/shop/${productPoint.shelf}/${productPoint._id}`)
         )
-        
+
         let responses = await Promise.allSettled(shelfResponses)
-        
+
         //выбираем из каждого промиса только его .value.data
         let responseData = [] as Product[]
         //@ts-ignore
@@ -120,9 +105,6 @@ const actions = {
             commit('ADD_PRODUCT_TO_BASKET', {shelf, _id})
         })
     } else {
-      // let config = getters.GET_AXIOS_CONFIG
-      // config.params._id = _id        //_id мы получаем на сервере как req.query._id
-      
       await axios.delete(`/auth/basket`, {params: {_id}})
         .then(response => {
           if (response.status === 200)
@@ -131,9 +113,6 @@ const actions = {
     }
   },
   async CLEAR_BASKET({commit}): Promise<void> {
-    // let config = getters.GET_AXIOS_CONFIG
-    // config.params._id = 'all'
-    
     await axios.delete(`/auth/basket`, {params: {_id: 'all'}})
       .then(response => {
         if (response.status === 200)

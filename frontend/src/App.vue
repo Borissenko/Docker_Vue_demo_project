@@ -82,8 +82,7 @@ export default Vue.extend({
       'GET_USER_LOGIN',
       'GET_CLARIFICATION',
       'GET_ALERT'
-    ]),
-
+    ])
   },
   methods: {
     ...mapActions([
@@ -114,8 +113,6 @@ export default Vue.extend({
       } else {        //for LOGOUT. Stigma - "password: ''".
         this.TOUCH_ACCOUNT({login: this.GET_USER_LOGIN, password: ''})
             .then(() => {
-              console.log('LOGOUT, this.$route.path ===============', this.$route.path)
-
               if (this.$route.path === '/person' || this.$route.path === '/basket')
                 this.$router.push('/')
             })
@@ -126,7 +123,8 @@ export default Vue.extend({
     }
   },
   async created() {
-    if (!this.GET_IS_BASKET_POINTS)   //восстанавливались ли во Vuex после перезагрузки сайта сноски на продукты, которые положены в корзину. Важно, для нормальной работы в асинхронности при перезагрузке броузера.
+    if (!this.GET_IS_BASKET_POINTS)   //восстанавливались ли во Vuex сноски на продукты после перезагрузки сайта, которые положены в корзину. Важно, для нормальной работы в асинхронности при перезагрузке броузера.
+      // @ts-ignore
       await this.FETCH_BASKET_POINTS()
 
     if (this.$route.path === '/' || this.$route.path === '/laptops')

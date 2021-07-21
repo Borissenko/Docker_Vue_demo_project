@@ -2,34 +2,32 @@ const assert = require('assert')
 const {SessionBasketModel} = require('../models/sessionBaskets')
 const {authModel} = require('../models/auth')
 
-//controllers for move products at session & account baskets
+//controllers for products moving in session & account baskets
 
 module.exports.getBasket = async (req, res) => {
   if (!req.session.i)            //сессию инициализируем данным запросом, т.к. он посылается уже при загрузке сайта.
     req.session.i = 0;
   ++req.session.i;
-  
-  console.log('===== getBasket // req.sessionID => ', req.sessionID)
-  console.log('===== getBasket // req.is_authorization =>', req.is_authorization)
-  
+
   let login = req.authorizedLogin
   //пользователь авторизован - используем аккаунтную корзину
   if(login) {
     await authModel.findOne({login}, function (err, account) {
       assert.equal(err, null);
-      return account.userData.basket
+      return account
     })
-      .then(basket => res.send(basket))
+      .then(account => account == null ? res.send([]) : res.send(account.userData.basket))
     
   //пользователь НЕ авторизован - используем сессионную корзину.
   } else {
-    await SessionBasketModel.findOne({sessionID: req.sessionID}, function (err, basket) {
-      assert.equal(err, null);
-      return basket
+    await SessionBasketModel.findOne({sessionID: req.sessionID}, function (err, sessionData) {
+      assert.equal(err, null)
+      return sessionData
     })
-      .then(basket => basket == null ? res.send({basketPoints: []}) : res.send(basket))
+      .then(sessionData => sessionData == null ? res.send([]) : res.send(sessionData.basketPoints))
   }
 }
+
 
 module.exports.putProductToBasket = async (req, res) => {
   let login = req.authorizedLogin
@@ -50,14 +48,10 @@ module.exports.putProductToBasket = async (req, res) => {
         await authModel.updateOne({login}, {userData: {basket: account.userData.basket}}, function (err, res) {
           console.log(err)
         })
-        
         // await account.save(function (err, account) {     //  NO WORKING
         //   if (err) throw err;
         // })
       })
-  
-  
-    
     
   } else {
     await SessionBasketModel.findOne({sessionID: req.sessionID}, function (err, basket) {

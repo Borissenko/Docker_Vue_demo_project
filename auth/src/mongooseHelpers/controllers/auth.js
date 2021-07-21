@@ -34,8 +34,7 @@ module.exports.touchAccount = async(req, res) => {
   let filter
   let sessionID = req.sessionID
   let currentRefreshToken = ''
-  
-  console.log('touchAccount 1 , req.body ============', req.body)
+
   
   //a. for LOGIN, LOGOUT({login: '999-99-99', password: ''}) & create_account. NOT for refreshing tokens.
   // Аккаунт ищем по значению login & password.
@@ -52,8 +51,6 @@ module.exports.touchAccount = async(req, res) => {
     else
       return res.status(403).send({message: 'refreshToken is wrong'})
   }
-  
-  console.log('FILTER for find account =======', filter)
   
   //обращаемся к аккаунту
   await authModel.findOne(filter, function(err, account) {

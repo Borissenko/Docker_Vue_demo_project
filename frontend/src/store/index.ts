@@ -39,7 +39,6 @@ const actions = {
     commit('SET_CLARIFICATION', message)   //показываем пояснение
   },
   SHOW_ALERT({commit}, alertStuff): void {
-    console.log('SHOW_ALERT')
     commit('SET_ALERT', alertStuff)   //показываем алерт
   },
   async FETCH_DATA_FROM_DISKSTORAGE({commit}, dataName): Promise<void> {

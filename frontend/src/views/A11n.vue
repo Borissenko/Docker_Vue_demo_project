@@ -97,7 +97,7 @@ export default Vue.extend({
         passwordConfirm: {
           value: {
             // @ts-ignore
-            sameAs: sameAs(function() {
+            sameAs: sameAs(function () {
               // @ts-ignore
               return this.forms.password.value
             })
@@ -110,29 +110,28 @@ export default Vue.extend({
     ...mapActions([
       'TOUCH_ACCOUNT'
     ]),
-    onAuthentication() {   //for logIn & create_account concurrently
-      //при Login (т.е. не при регистрации нового пользователя)
-      //устраняем влияние незадействованного поля passwordConfirm, иначе this.$v.forms.$anyError будет давать false.
-      if(!this.isRegistrationInterface)
+    async onAuthentication() {   //for logIn & create_account concurrently
+      //при Login устраняем влияние незадействованного поля passwordConfirm, иначе this.$v.forms.$anyError будет давать false.
+      if (!this.isRegistrationInterface)
         this.forms.passwordConfirm.value = this.forms.password.value
 
       // @ts-ignore
       this.$v.$touch()
       // @ts-ignore
-      if(this.$v.forms.$dirty && !this.$v.forms.$anyError) {
-        this.TOUCH_ACCOUNT({login: this.forms.login.value, password: this.forms.password.value})
+      if (this.$v.forms.$dirty && !this.$v.forms.$anyError) {
+        await this.TOUCH_ACCOUNT({login: this.forms.login.value, password: this.forms.password.value})
             .then(isSuccess => {
               this.forms.password.value = ''           //предупреждаем утечку sensitive_data.
               this.forms.passwordConfirm.value = ''
 
-              if(isSuccess)
+              if (isSuccess)
                 this.$router.push('/person')         //when isSuccess is false we would go to another url or stay on a same place.
             })
       }
     },
     onSwitchToTheRegistrationInterface() {
       //обнуляем результаты предыдущей возможной попытки валидации (если были попытки заполнить форму на первом этапе login'a)
-      for(let formValue of Object.values(this.forms)) {
+      for (let formValue of Object.values(this.forms)) {
         formValue.value = ''
       }
       // @ts-ignore

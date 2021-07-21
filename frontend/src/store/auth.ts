@@ -29,17 +29,14 @@ export default {
           return token
         }
       }
+      // @ts-ignore
       state.accessTokenClosure = data.accessToken ? closure(data.accessToken) : null
-      
-      console.log('STORE/SET_AUTH , data.accessToken ====', data.accessToken)
-      
     }
   } as MutationTree<AuthState>,
   actions: {
     //for LOGIN, LOGOUT & create_account concurrently AND
     //for "восстановление accessToken'a через refreshToken"(в pl запроса будет {login: '', password: ''}).
-    async TOUCH_ACCOUNT({commit}, {login, password}: Authentication): Promise<boolean> {
-      console.log('STORE/TOUCH_ACCOUNT, {login, password} = ', {login, password})
+    async TOUCH_ACCOUNT({commit, dispatch, getters}, {login, password}: Authentication): Promise<boolean> {
       return await axios.post('auth/authentication', {login, password})      //обращаемся к auth-сервису докера через Nginx (а не к auth-сервису напрямую).
         .then((data) => {                                            //data = {login, accessToken, userData}
           if(data) {                                      //на случай, когда запрос возвращает error_401 или 403, но сквозь интерсептор у axios сюда ответ с data, хотя и undefined(!), все равно проходит.

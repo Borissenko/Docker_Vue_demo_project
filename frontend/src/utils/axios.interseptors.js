@@ -10,11 +10,8 @@ const treatAccessTokenInterceptor = store => async config => {
   let accessToken = store.getters.GET_ACCESS_TOKEN      //по-умолчанию равен ''.
   let isAuthAccess                                      //from LocalStorage, стигма о наличии (скрытой и недоступной для клиента) refresh-куки. Для перезагрузки в состоянии совершенного Login'a.
   // await store.dispatch('GET_AUTH_AT_LOCAL_STORAGE', 'authAccess').then(authAccess => isAuthAccess = authAccess)      //actions возвращают return, ОБЕРНУТЫЙ в промис(!). await-обязателен(!).
-  
-  console.log('front=interceptor, url = ', url)
-  console.log('front=interceptor, accessToken = ', accessToken)
-  console.log('front=interceptor, isAuthAccess = ', isAuthAccess)
-  
+
+
   //1. отправляем запрос без изменений, не добавляя header с accessToken'ом.
   //a) если запрос - не на "/auth".
   //b) если запрос на "/auth", но к СЕССИОННОЙ карзине, т.е. когда НЕ к "/auth/authentication", а accessToken и isAuthAccess - отсутствуют.
@@ -36,7 +33,6 @@ const treatAccessTokenInterceptor = store => async config => {
     (url.includes('auth/authentication') && !accessToken && !isAuthAccess) ||
     (url.includes('auth/authentication') && !accessToken && isAuthAccess)         //выражение можно упростить, но для наглядности оставляю его в развернутом виде
   ) {
-    console.log('config.url withOut_token_revision =====', config.url)
     return config
   }
   
@@ -73,7 +69,6 @@ const treatAccessTokenInterceptor = store => async config => {
       //ПОВТОРНО запрашиваем из Store ВОССТАНОВЛЕННЫЙ accessToken и прикрепляем его к хедеру запроса и далее
       //передаем в пролонгацию запроса config запроса с корректным AccessToken'ом в хедере.
       accessToken = store.getters.GET_ACCESS_TOKEN
-      console.log('treatAccessTokenInterceptor//ВОССТАНОВЛЕННЫЙ AccessToken в config"e =======', config)
       return AuthUtils.attachAccessTokenToHeader(accessToken, config)
       
     } else {                      //b) access-токен НЕ просрочен. Добавляем его в хедер запроса.
@@ -110,10 +105,7 @@ const updateTokensInterceptor = (store, http) => async error => {
   // }
   
   if(error.response.status === 401) {   //"для доступа требуется аутентификация".
-    
     //посылаем запрос для восстановления access-токена via refresh-токен.
-    console.log('updateTokensInterceptor - 401 ============')
-    
     tokenRecoveryPromise = store.dispatch('TOUCH_ACCOUNT', {login: '', password: ''})
     await tokenRecoveryPromise
     tokenRecoveryPromise = null
@@ -124,16 +116,17 @@ const updateTokensInterceptor = (store, http) => async error => {
     //заново повторяем неудавшийся запрос, но уже с восстановленным accessToken'ом.
     return http(accessConfig)
   }
-  
+
+
   //"есть ограничения в доступе":
   // - Неверный пароль при login'e.
   // - Невалидный access-токен и refresh-токен
   // - Невалидный refresh-токен при перезагрузке.
   if(error.response.status === 403) {
     //Описываем причину для алерта и предлагаем повторно пройти идентификацию.
-    console.log('ERROR_403 ========')
+    console.log('ERROR_403 ========', error.response.data.message)
     
-    let clarification = `Access was denied because of ${error.response.data.message}`
+    let clarification = `Access was denied <br>because of <br>${error.response.data.message}`
     store.dispatch('SHOW_CLARIFICATION', clarification)
       .then(() => {
         if(router.currentRoute.path !== '/a11n')   //For avoid redundant navigation to current location "/a11n".
